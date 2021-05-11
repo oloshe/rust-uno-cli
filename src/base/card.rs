@@ -3,36 +3,9 @@ use std::fmt::{Debug, Display};
 #[derive(Debug)]
 #[derive(Clone, Copy)]
 pub enum CardType {
-    Number(NumberCard),
+    Number(u8),
     Functional(FunctionalCard),
     Universal(UniversalCard),
-}
-/// 数字牌
-#[derive(Debug)]
-#[derive(Clone, Copy)]
-pub enum NumberCard { Zero, One,Two,Three,Four,Five,Six,Seven,Eight,Nine }
-
-impl Display for NumberCard {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
-    }
-}
-
-impl NumberCard {
-    fn to_string(&self) -> &str {
-        match self {
-            NumberCard::Zero => "0",
-            NumberCard::One => "1",
-            NumberCard::Two => "2",
-            NumberCard::Three => "3",
-            NumberCard::Four => "4",
-            NumberCard::Five => "5",
-            NumberCard::Six => "6",
-            NumberCard::Seven => "7",
-            NumberCard::Eight => "8",
-            NumberCard::Nine => "9",
-        }
-    }
 }
 
 /// 功能牌
@@ -87,7 +60,10 @@ pub struct Card {
 
 impl Card {
     /// 创建一个数字牌
-    pub fn new_number_card(num: NumberCard, card_color: NormalColor) -> Card {
+    pub fn new_number_card(num: u8, card_color: NormalColor) -> Card {
+        if num >= 10 {
+            panic!("Number Card is out of bound(0~9)!")
+        }
         Card {
             card_type: CardType::Number(num),
             card_color: CardColor::Normal(card_color),
