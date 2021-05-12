@@ -1,18 +1,18 @@
 #[derive(Debug)]
-pub struct Player<'a> {
-    id: &'a str,
-    name: &'a str,
+pub struct Player {
+    id: String,
+    name: String,
 }
 
-impl Player<'_> {
-    pub fn new<'a>(id: &'a str, name: &'a str) -> Player<'a> {
-        Player{ id, name }
+impl Player {
+    pub fn new(id: &str, name: &str) -> Player {
+        Player{ id: id.to_string(), name: name.to_string() }
     }
-    pub fn get_id(&self) -> &str {
-        self.id
+    pub fn get_id(&self) -> &String {
+        &self.id
     }
     
-    pub fn get_name(&self) -> &str {
-        self.name
+    pub fn get_name(&self) -> &String {
+        &self.name
     }
 }

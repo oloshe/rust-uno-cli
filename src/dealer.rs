@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt::Display, usize};
+use core::result::Result;
 use console::style;
+use rand::{prelude::SliceRandom, thread_rng};
 use crate::base::card::*;
 use crate::base::player::*;
 use crate::base::GameData;
@@ -7,6 +9,14 @@ use crate::base::GameData;
 enum GameState {
     Ready,
     Started,
+}
+
+#[derive(Debug)]
+enum Direction {
+    /// 顺时针
+    Clockwise,
+    /// 逆时针
+    Counterclockwise
 }
 /// 发牌家
 /// 108张牌
@@ -19,8 +29,9 @@ pub struct Dealer<'a> {
     /// 游戏状态
     game_state: GameState,
     /// 玩家
-    players: HashMap<String, &'a Player<'a>>,
-    game_data: HashMap<String, GameData<'a>>,
+    players: HashMap<String, &'a Player>,
+    game_data: HashMap<String, GameData>,
+    direction: Direction,
 }
 impl<'a> Dealer<'a> {
      /// 新建一个发牌家
@@ -36,6 +47,7 @@ impl<'a> Dealer<'a> {
             game_state: GameState::Ready,
             players: HashMap::new(),
             game_data: HashMap::new(),
+            direction: Direction::Clockwise,
         }
      }
 
@@ -89,19 +101,20 @@ impl<'a> Dealer<'a> {
         }
      }
 
-
+     /// 添加玩家
      pub fn add_player(&mut self, p: &'a Player) {
         let id = p.get_id();
         if self.players.contains_key(id) {
-            println!("{}", style("该玩家已存在").red());
+            // println!("> {} {}", style(p.get_name()).blue(), style("试图重复加入房间").black());
         } else {
-            let id = id.to_string();
+            let _id_str = || id.to_string();
             println!(
                 "> {} {} 加入了游戏",
                  style(p.get_name()).blue(), 
-                 style(format!("({})", id)).yellow()
+                 style(format!("({})", _id_str())).yellow()
             );
-            self.players.insert(id, p);
+            self.players.insert(_id_str(), p);
+            self.game_data.insert(_id_str(), GameData::new(_id_str()));
         }
      }
 
@@ -115,17 +128,67 @@ impl<'a> Dealer<'a> {
          self.card_used.len()
      }
 
+     /// 玩家数量
      pub fn player_count(&self) -> usize {
          self.players.len()
      }
 
      /// 开始游戏
-     pub fn start_game(&mut self) {
+     ///
+     /// 玩家们随意指定一个玩家作为庄家。随后每人取牌7张，其余作为牌堆。庄家从牌堆中取出首张数字牌（若不是数字牌则再取），并依据此牌出牌，游戏开始。出牌的初始顺序是顺时针。
+     pub fn start_game(&mut self) -> Result<(), &str> {
+         let count = self.player_count();
+         if count < 2 {
+            return Err("> 人数不足无法开始")
+         }
          self.game_state = GameState::Started;
+         self.reset_game_data();
+         self.shuffle_card();
+         self.distribute_card();
          println!("
          游戏开始：
          玩家数量：{}
-         ", self.player_count());
+         ", count);
+         Ok(())
+     }
+
+     /// 初始化游戏数据
+     fn reset_game_data(&mut self) {
+        self.game_data.clear();
+        for (id, _) in self.players.iter_mut() {
+            self.game_data.insert(id.to_string(), GameData::new(id.to_string()));
+        }
+     }
+
+     /// 洗牌
+     pub fn shuffle_card(&mut self) {
+        self.card_stack.shuffle(&mut thread_rng());
+     }
+
+     /// 发牌
+     fn distribute_card(&mut self) {
+        // let mut players = &self.players;
+        for (_, p) in self.game_data.iter_mut() {
+            for _ in 0..7 {
+                p.add_card(
+                    self.card_stack.pop().expect("error")
+                );
+            }
+        }
+     }
+
+     /// 抽卡
+     pub fn get_a_card(&mut self) -> Option<Card> {
+        self.card_stack.pop()
+     }
+
+     pub fn print_game_data(&self) {
+         for (id, data) in self.game_data.iter() {
+            println!("
+            id: {}
+            牌: {}
+            ", id, data);
+         }
      }
  }
 
@@ -134,6 +197,8 @@ impl<'a> Dealer<'a> {
         write!(f, "
         剩余牌数量：{}
         已出牌数量: {}
-        ", self.count(), self.used_count())
+
+{:#?}
+        ", self.count(), self.used_count(), self.game_data)
     }
  }
