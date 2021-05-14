@@ -4,7 +4,7 @@ use console::{Emoji, Term, style};
 use dialoguer::{Input, Select, theme::ColorfulTheme};
 use indicatif::ProgressBar;
 
-use crate::base::player::Player;
+use crate::{base::player::Player, net::local_area_network::LAN};
 
 pub struct Loopper<'a> {
     user: Player,
@@ -50,7 +50,7 @@ impl<'a> Loopper<'a>{
         // }
         // pb.finish_and_clear();
         self.set_menu(vec![
-            "创建局域网",
+            "局域网",
             "联网大厅",
             "退出"
         ]);
@@ -61,11 +61,14 @@ impl<'a> Loopper<'a>{
             .interact_on_opt(&Term::stderr())?;
         match selection {
             Some(index) => match index {
-                0 => (),
+                0 => self.lan(),
                 _ => println!("{}", index),
             },
             None => self.main_menu()?
         }
         Ok(())
+    }
+    fn lan(&self) {
+        LAN::connect();
     }
 }
