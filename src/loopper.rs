@@ -50,8 +50,8 @@ impl<'a> Loopper<'a>{
         // }
         // pb.finish_and_clear();
         self.set_menu(vec![
-            "局域网",
-            "联网大厅",
+            "创建局域网",
+            "连接局域网",
             "退出"
         ]);
         let items = self.get_menu();
@@ -61,14 +61,19 @@ impl<'a> Loopper<'a>{
             .interact_on_opt(&Term::stderr())?;
         match selection {
             Some(index) => match index {
-                0 => self.lan(),
+                0 => self.lan2(),
+                1 => self.lan1(),
                 _ => println!("{}", index),
             },
             None => self.main_menu()?
         }
         Ok(())
     }
-    fn lan(&self) {
-        LAN::connect();
+    fn lan1(&self) {
+        // LAN::connect().expect("asda");
+        LAN::bootstrap().expect("bottstap");
+    }
+    fn lan2(&self) {
+        LAN::serve();
     }
 }

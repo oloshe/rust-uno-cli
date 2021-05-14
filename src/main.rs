@@ -4,6 +4,7 @@ mod net;
 mod base;
 mod dealer;
 mod loopper;
+use local_ipaddress;
 fn main() {
 //     let mut dealer = dealer::Dealer::new();
 //     println!("{}", dealer);
@@ -17,6 +18,7 @@ fn main() {
 //         _ => (),
 //     }
 //     println!("{}", dealer);
+    println!("{}", local_ipaddress::get().unwrap());
     let mut looper = Loopper::new();
     looper.bootstrap();
 }
