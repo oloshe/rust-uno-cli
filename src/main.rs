@@ -1,3 +1,5 @@
+#![warn(unused)]
+
 use loopper::Loopper;
 
 mod net;
