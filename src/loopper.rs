@@ -4,21 +4,58 @@ use console::{Emoji, Term, style};
 use dialoguer::{Input, Select, theme::ColorfulTheme};
 use indicatif::ProgressBar;
 
-use crate::{base::player::Player, net::local_area_network::LAN};
+use crate::{base::player::Player, net::client::Client};
+
+struct GlobalData {
+
+}
 
 pub struct Loopper {
     user: Player,
+    client: Client,
 }
 impl Loopper{
     pub fn new() -> Loopper {
+        println!("> 本地地址：{}", style(local_ipaddress::get().unwrap()).blue());
+        let addr = "127.0.0.1:24404";
+        println!("> 连接服务器: {}", style(addr).blue());
         Loopper{
             user: Player::new("0", "nick"),
+            client: Client::connect(addr),
         }
     }
     pub fn bootstrap(&mut self) {
         self.login().expect("error")
     }
     fn login(&mut self) -> Result<()> {
+        self.main_menu().expect("error");
+        Ok(())
+    }
+    fn main_menu(&self) -> Result<()>{
+        let items = vec![
+            "房间列表",
+            "帮助",
+            "设置",
+            "退出"
+        ];
+        loop {
+            let selection  = Select::with_theme(&ColorfulTheme::default())
+                .items(&items)
+                .default(0)
+                .interact_on_opt(&Term::stderr())?;
+            match selection {
+                Some(index) => match index {
+                    0 => self.lan_menu()?,
+                    1 => println!("暂无帮助"),
+                    2 => self.setting()?,
+                    _ => break,
+                },
+                None => continue
+            }
+        }
+        Ok(())
+    }
+    fn setting(&mut self) -> Result<()> {
         let id: String = Input::new()
             .with_prompt("> 请输入id")
             .interact()?;
@@ -31,29 +68,6 @@ impl Loopper{
         let name = name.trim();
         self.user = Player::new(id, name);
         println!("> {} ({}) {}", style(name).blue(), id, style("登录成功！").yellow());
-        self.main_menu().expect("error");
-        Ok(())
-    }
-    fn main_menu(&self) -> Result<()>{
-        let items = vec![
-            "局域网",
-            "帮助",
-            "退出"
-        ];
-        loop {
-            let selection  = Select::with_theme(&ColorfulTheme::default())
-                .items(&items)
-                .default(0)
-                .interact_on_opt(&Term::stderr())?;
-            match selection {
-                Some(index) => match index {
-                    0 => self.lan_menu()?,
-                    1 => println!("暂无帮助"),
-                    _ => break,
-                },
-                None => continue
-            }
-        }
         Ok(())
     }
     fn lan_menu(&self) -> Result<()> {

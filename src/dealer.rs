@@ -4,7 +4,7 @@ use console::style;
 use rand::{prelude::SliceRandom, thread_rng};
 use crate::base::card::*;
 use crate::base::player::*;
-use crate::base::GameData;
+use crate::base::game_data::*;
 #[derive(Debug)]
 enum GameState {
     Ready,
