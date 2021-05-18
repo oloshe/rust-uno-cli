@@ -1,17 +1,16 @@
-use std::{collections::HashMap, io::{self, Result}, ops::Index, thread, time::Duration};
+use std::{borrow::BorrowMut, io::{self, Result}, ops::Index, process::exit, sync::Mutex, thread, time::Duration};
 
 use console::{Emoji, Term, style};
 use dialoguer::{Input, Select, theme::ColorfulTheme};
-use indicatif::ProgressBar;
+use lazy_static::lazy_static;
 
-use crate::{base::player::Player, net::client::Client};
+use crate::{base::player::Player, dto::room_dto::{GetRoomListDTO, GetRoomListResp}, net::client::Client};
 
-struct GlobalData {
-
+lazy_static! {
+    static ref USER: Mutex<Player> = Mutex::new(Player::new("0", "nick"));
 }
 
 pub struct Loopper {
-    user: Player,
     client: Client,
 }
 impl Loopper{
@@ -20,11 +19,11 @@ impl Loopper{
         let addr = "127.0.0.1:24404";
         println!("> 连接服务器: {}", style(addr).blue());
         Loopper{
-            user: Player::new("0", "nick"),
             client: Client::connect(addr),
         }
     }
     pub fn bootstrap(&mut self) {
+        // self.client.send("{}", &mut [0;100], |a| {});
         self.login().expect("error")
     }
     fn login(&mut self) -> Result<()> {
@@ -48,14 +47,16 @@ impl Loopper{
                     0 => self.lan_menu()?,
                     1 => println!("暂无帮助"),
                     2 => self.setting()?,
-                    _ => break,
+                    _ => {
+                        println!("欢迎下次光临...");
+                        exit(0)
+                    },
                 },
                 None => continue
             }
         }
-        Ok(())
     }
-    fn setting(&mut self) -> Result<()> {
+    fn setting(&self) -> Result<()> {
         let id: String = Input::new()
             .with_prompt("> 请输入id")
             .interact()?;
@@ -66,8 +67,8 @@ impl Loopper{
         
         let id = id.trim();
         let name = name.trim();
-        self.user = Player::new(id, name);
-        println!("> {} ({}) {}", style(name).blue(), id, style("登录成功！").yellow());
+        USER.lock().unwrap().reset(id, name);
+        println!("> 设置成功 ({}) {}", style(name).blue(), id);
         Ok(())
     }
     fn lan_menu(&self) -> Result<()> {
